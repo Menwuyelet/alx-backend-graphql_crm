@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
-import requests
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
 
 LOG_FILE = "/tmp/crm_heartbeat_log.txt"
 
@@ -10,19 +11,20 @@ def log_crm_heartbeat():
     message = f"{timestamp} CRM is alive"
 
     try:
-        response = requests.post(
-            "http://localhost:8000/graphql",
-            json={"query": "{ hello }"},
-            timeout=5
+        transport = RequestsHTTPTransport(
+            url="http://localhost:8000/graphql",
+            verify=True,
+            retries=3,
         )
-        if response.ok and "data" in response.json():
-            hello_value = response.json()["data"].get("hello", "No response")
-            message += f" | GraphQL says: {hello_value}"
-        else:
-            message += " | GraphQL check failed"
+        client = Client(transport=transport, fetch_schema_from_transport=True)
+
+        query = gql("{ hello }")
+        result = client.execute(query)
+        hello_value = result.get("hello", "No response")
+        message += f" | GraphQL says: {hello_value}"
+
     except Exception as e:
         message += f" | GraphQL error: {e}"
-
 
     with open(LOG_FILE, "a") as f:
         f.write(message + "\n")
