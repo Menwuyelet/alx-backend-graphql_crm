@@ -4,8 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 from django.core.validators import validate_email, RegexValidator
 from django.core.exceptions import ValidationError
-from .models import Customer, Product, Order
-
+from .models import Customer, Order
+from crm.models import Product
 
 class CustomerType(DjangoObjectType):
     class Meta:
